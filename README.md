@@ -100,7 +100,7 @@ Contains application Dockerfile and build context:
 - Optimized container configuration
 - Spring Boot application containerization
 
-[Go to Docker documentation →](./Docker/README.md)
+[Go to Docker documentation →](./app/README.md)
 
 ### Kubernetes
 
@@ -109,7 +109,7 @@ Contains Kubernetes manifests for application deployment:
 - Persistent storage setup
 - Namespace isolation
 
-[Go to Kubernetes documentation →](./Kubernetes/README.md)
+[Go to Kubernetes documentation →](./k8s-manifests/README.md)
 
 ### ArgoCD
 
