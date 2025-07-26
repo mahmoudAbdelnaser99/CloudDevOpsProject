@@ -73,7 +73,7 @@ Contains Infrastructure as Code (IaC) configurations for AWS resources:
 - Security groups and networking
 - CloudWatch monitoring setup
 
-[Go to Terraform documentation →](./Terraform/README.md)
+[Go to Terraform documentation →](./terraform/README.md)
 
 ### Ansible
 
