@@ -32,5 +32,14 @@ variable "key_name" {
 variable "instance_count" {
   description = "Number of EC2 instances"
   type        = number
-  default     = 2
+  default     = 4
+}
+
+variable "instance_names" {
+  default = {
+    0 = "jenkins-master"
+    1 = "jenkins-slave"
+    2 = "kubemaster"
+    3 = "kubenode1"
+  }
 }

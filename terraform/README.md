@@ -52,7 +52,7 @@ jenkins-infrastructure/
 ### 2. Configured Terraform Backend (S3)
 To store Terraform state remotely and enable team collaboration:
 ```bash
-aws s3api create-bucket --bucket jenkins123-terraform-state --region us-east-1
+aws s3api create-bucket --bucket jenkins12345-terraform-state --region us-east-1
 aws s3api put-bucket-versioning --bucket jenkins12345-terraform-state --versioning-configuration Status=Enabled
 ```
 

@@ -7,4 +7,4 @@ subnet_cidr         = ["10.0.1.0/24", "10.0.2.0/24"]
 az                  = ["us-east-1a", "us-east-1b"]
 instance_type       = "t3.medium"
 key_name            = "jenkins-key"
-ami_id              = "ami-08a6efd148b1f7504"
+ami_id              = "ami-0a7d80731ae1b2435"
