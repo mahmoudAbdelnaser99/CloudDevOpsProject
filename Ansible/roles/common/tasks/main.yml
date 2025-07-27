@@ -1,0 +1,21 @@
+---
+- name: Update apt cache
+  apt:
+    update_cache: yes
+    cache_valid_time: 3600
+
+- name: Install common packages
+  apt:
+    name:
+      - wget
+      - curl
+      - unzip
+      - ca-certificates
+      - tar
+      - python3
+      - python3-pip
+    state: present
+
+- name: Set timezone
+  community.general.timezone:
+    name: UTC

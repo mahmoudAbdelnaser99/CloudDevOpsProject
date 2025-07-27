@@ -1,0 +1,20 @@
+---
+- name: Configure Jenkins Master
+  hosts: _jenkins_master
+  become: true
+  roles:
+    - common
+    - git
+    - java
+    - docker
+    - jenkins
+
+- name: Configure Jenkins Slave
+  hosts: _jenkins_slave
+  become: true
+  roles:
+    - common
+    - git
+    - java
+    - docker
+

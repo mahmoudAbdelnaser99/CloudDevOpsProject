@@ -1,0 +1,27 @@
+---
+
+- name: Run common setup script on all EC2s
+  hosts:
+    - _kubemaster
+      _kubenode1
+  become: true
+  roles:
+    - role: kubeadm
+
+- name: Initialize Kubernetes master
+  hosts: _kubemaster
+  become: true
+  tasks:
+    - name: Import init_master tasks
+      import_role:
+        name: kubeadm
+        tasks_from: init_master
+
+- name: Join worker nodes to cluster
+  hosts: _kubenode1
+  become: true
+  tasks:
+    - name: Import join_node tasks
+      import_role:
+        name: kubeadm
+        tasks_from: join_node

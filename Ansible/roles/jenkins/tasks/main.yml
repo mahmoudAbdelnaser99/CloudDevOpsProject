@@ -1,0 +1,170 @@
+---
+# _____________________________ Java 17 Installation _____________________________
+- name: Install OpenJDK 17
+  apt:
+    name: openjdk-17-jdk
+    state: present
+    update_cache: yes
+  become: yes
+
+- name: Set JAVA_HOME environment variable
+  lineinfile:
+    path: /etc/environment
+    line: 'JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64'
+    create: yes
+
+# _____________________________ Jenkins Installation _____________________________
+- name: Add Jenkins repository key
+  apt_key:
+    url: https://pkg.jenkins.io/debian-stable/jenkins.io-2023.key
+    state: present
+
+- name: Add Jenkins APT repository
+  apt_repository:
+    repo: "deb https://pkg.jenkins.io/debian-stable binary/"
+    state: present
+
+- name: Install Jenkins
+  apt:
+    name: jenkins
+    update_cache: yes
+  become: true
+
+# _____________________________ Skip Setup Wizard Properly _____________________________
+- name: Mark setup wizard as completed
+  copy:
+    dest: /var/lib/jenkins/jenkins.install.UpgradeWizard.state
+    content: "2.440"
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+
+- name: Mark last executed install version
+  copy:
+    dest: /var/lib/jenkins/jenkins.install.InstallUtil.lastExecVersion
+    content: "2.440"
+    owner: jenkins
+    group: jenkins
+    mode: '0644'
+
+# _____________________________ Create Admin User via Groovy _____________________________
+- name: Ensure Jenkins init.groovy.d directory exists
+  file:
+    path: /var/lib/jenkins/init.groovy.d
+    state: directory
+    owner: jenkins
+    group: jenkins
+    mode: '0755'
+
+- name: Create Jenkins admin user via init Groovy script
+  copy:
+    dest: /var/lib/jenkins/init.groovy.d/basic-security.groovy
+    content: |
+      import jenkins.model.*
+      import hudson.security.*
+
+      def instance = Jenkins.getInstanceOrNull()
+      if (instance != null) {
+          def hudsonRealm = new HudsonPrivateSecurityRealm(false)
+          hudsonRealm.createAccount("{{ jenkins_user }}", "{{ jenkins_password }}")
+          instance.setSecurityRealm(hudsonRealm)
+          def strategy = new FullControlOnceLoggedInAuthorizationStrategy()
+          instance.setAuthorizationStrategy(strategy)
+          instance.save()
+      }
+  notify: restart jenkins
+
+- name: Add Groovy script to install suggested plugins
+  copy:
+    dest: /var/lib/jenkins/init.groovy.d/plugins.groovy
+    content: |
+      import jenkins.model.*
+      import hudson.model.*
+      import java.util.logging.Logger
+
+      def plugins = [
+        "git",
+        "workflow-aggregator",
+        "credentials-binding",
+        "ssh-slaves",
+        "matrix-auth",
+        "pipeline-stage-view",
+        "pipeline-github-lib",
+        "github",
+        "junit",
+        "email-ext",
+        "ant",
+        "gradle",
+        "blueocean",
+        "docker-plugin",
+        "pipeline-model-definition",
+        "configuration-as-code",
+        "ws-cleanup",
+        "timestamper",
+        "nodejs",
+        "pipeline-utility-steps",
+        "docker-workflow",
+        "git-client",
+        "github-branch-source",
+        "command-launcher",
+        "job-dsl",
+        "build-timeout",
+        "workflow-multibranch",
+        "lockable-resources",
+        "workflow-step-api",
+        "scm-api",
+        "pipeline-input-step",
+        "ansicolor",
+        "htmlpublisher",
+        "pipeline-stage-step",
+        "credentials"
+      ]
+
+      def instance = Jenkins.getInstance()
+      def pluginManager = instance.getPluginManager()
+      def updateCenter = instance.getUpdateCenter()
+      Logger logger = Logger.getLogger("")
+
+      plugins.each { pluginName ->
+        if (!pluginManager.getPlugin(pluginName)) {
+          def plugin = updateCenter.getPlugin(pluginName)
+          if (plugin) {
+            logger.info("Installing plugin: ${pluginName}")
+            plugin.deploy()
+          }
+        }
+      }
+
+      instance.save()
+  notify: restart jenkins
+- name: Install BlueOcean UI plugin separately
+  copy:
+    dest: /var/lib/jenkins/init.groovy.d/blueocean.groovy
+    content: |
+      import jenkins.model.*
+      import java.util.logging.Logger
+
+      def instance = Jenkins.getInstance()
+      def pluginManager = instance.getPluginManager()
+      def updateCenter = instance.getUpdateCenter()
+      Logger logger = Logger.getLogger("")
+
+      updateCenter.updateAllSites()
+
+      def pluginName = "blueocean"
+      def plugin = updateCenter.getPlugin(pluginName)
+      if (!pluginManager.getPlugin(pluginName)) {
+        if (plugin) {
+          logger.info("Installing BlueOcean UI plugin")
+          plugin.deploy()
+        }
+      }
+      instance.save()
+  notify: restart jenkins
+
+# _____________________________ Start Jenkins Service _____________________________
+- name: Ensure Jenkins is started and enabled
+  service:
+    name: jenkins
+    state: started
+    enabled: yes

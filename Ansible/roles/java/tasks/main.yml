@@ -1,0 +1,64 @@
+---
+- name: Install Java dependencies
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - wget
+      - gnupg
+    state: present
+
+- name: Check if Java is already installed
+  command: java -version
+  register: java_check
+  failed_when: false
+  changed_when: false
+  ignore_errors: yes
+
+- name: Add Adoptium key
+  apt_key:
+    url: https://packages.adoptium.net/artifactory/api/gpg/key/public
+    state: present
+  when: java_check.rc != 0
+
+- name: Get Ubuntu version
+  command: lsb_release -cs
+  register: ubuntu_codename
+  changed_when: false
+
+- name: Add Adoptium repository
+  apt_repository:
+    repo: "deb https://packages.adoptium.net/artifactory/deb {{ ubuntu_codename.stdout }} main"
+    state: present
+    filename: adoptium
+  when: java_check.rc != 0
+
+- name: Update apt cache
+  apt:
+    update_cache: yes
+  when: java_check.rc != 0
+
+- name: Install Java 17
+  apt:
+    name: temurin-17-jdk
+    state: present
+  when: java_check.rc != 0
+
+- name: Find Java home directory
+  shell: update-alternatives --display java | grep 'link currently points to' | awk '{print $NF}' | sed 's/\/bin\/java$//'
+  register: java_home_cmd
+  changed_when: false
+
+- name: Set JAVA_HOME environment variable
+  lineinfile:
+    path: /etc/environment
+    line: 'JAVA_HOME="{{ java_home_cmd.stdout }}"'
+    state: present
+    create: yes
+
+- name: Make JAVA_HOME available for current session
+  shell: |
+    export JAVA_HOME="{{ java_home_cmd.stdout }}"
+    export PATH=$PATH:$JAVA_HOME/bin
+  args:
+    executable: /bin/bash

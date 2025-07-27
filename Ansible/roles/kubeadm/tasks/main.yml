@@ -1,0 +1,12 @@
+---
+
+- name: Upload common setup script
+  copy:
+    src: common-script.sh
+    dest: /tmp/common-script.sh
+    mode: 0755
+
+- name: Run common setup script
+  command: bash /tmp/common-script.sh
+  args:
+    creates: /usr/bin/kubeadm

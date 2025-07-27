@@ -1,0 +1,11 @@
+---
+
+- name: Set hostname
+  command: hostnamectl set-hostname node1
+
+- name: Reboot the node gracefully
+  reboot:
+    reboot_timeout: 600
+
+- name: Join the node to the Kubernetes cluster
+  shell: "{{ hostvars[groups['_kubemaster'][0]].kubeadm_join_cmd }} --ignore-preflight-errors=all"

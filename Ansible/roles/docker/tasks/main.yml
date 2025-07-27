@@ -1,0 +1,55 @@
+---
+- name: Install required packages
+  become: yes
+  apt:
+    name:
+      - apt-transport-https
+      - ca-certificates
+      - curl
+      - software-properties-common
+    state: present
+    update_cache: yes
+
+- name: Add Docker GPG key
+  become: yes
+  apt_key:
+    url: https://download.docker.com/linux/ubuntu/gpg
+    state: present
+
+- name: Add Docker APT repository
+  become: yes
+  apt_repository:
+    repo: deb https://download.docker.com/linux/ubuntu focal stable
+    state: present
+
+- name: Install Docker and Docker Compose Plugin
+  become: yes
+  apt:
+    name:
+      - docker-ce
+      - docker-ce-cli
+      - containerd.io
+      - docker-compose-plugin
+    state: present
+    update_cache: yes
+
+- name: Start and enable Docker service
+  become: yes
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Create docker group
+  become: yes
+  group:
+    name: docker
+    state: present
+
+- name: Add ubuntu user to docker group
+  become: yes
+  user:
+    name: ubuntu
+    groups: docker
+    append: yes
+

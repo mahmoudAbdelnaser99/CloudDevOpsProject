@@ -1,0 +1,61 @@
+---
+- name: Initialize kubeadm on master
+  command: kubeadm init --pod-network-cidr=10.244.0.0/16
+  register: kubeadm_output
+  changed_when: "'initialized' in kubeadm_output.stdout"
+  args:
+    creates: /etc/kubernetes/admin.conf
+
+
+- name: Set hostname to master
+  hostname:
+    name: master
+
+- name: Create .kube directory
+  file:
+    path: "{{ ansible_env.HOME }}/.kube"
+    state: directory
+    mode: '0755'
+
+- name: Copy admin.conf to user's kube config
+  copy:
+    src: /etc/kubernetes/admin.conf
+    dest: "{{ ansible_env.HOME }}/.kube/config"
+    remote_src: yes
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+
+- name: Apply Flannel CNI plugin
+  shell: kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml
+  args:
+    creates: /run/flannel/subnet.env  # Only runs if flannel is not already installed
+
+- name: Ensure kubectl bash completion is in .bashrc
+  lineinfile:
+    path: ~/.bashrc
+    line: "source <(kubectl completion bash)"
+    state: present
+
+- name: Add kubectl alias to .bashrc
+  lineinfile:
+    path: ~/.bashrc
+    line: "alias k=kubectl"
+    state: present
+
+- name: Add kubectl completion alias
+  lineinfile:
+    path: ~/.bashrc
+    line: "complete -F __start_kubectl k"
+    state: present
+
+
+
+- name: Generate kubeadm join command
+  command: kubeadm token create --print-join-command
+  register: join_command_output
+  delegate_to: "{{ groups['_kubemaster'][0] }}"
+
+- name: Set join command fact on master
+  set_fact:
+    kubeadm_join_cmd: "{{ join_command_output.stdout }}"
+  delegate_to: "{{ groups['_kubemaster'][0] }}"
