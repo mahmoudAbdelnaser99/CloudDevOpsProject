@@ -23,9 +23,9 @@ This project implements a complete DevOps infrastructure with the following majo
    * S3 Bucket for Terraform state backend
    * CloudWatch for monitoring and logging
 
-### 2. Local Development Environment
-* **Minikube Cluster**:
-   * Local Kubernetes implementation for testing
+### 2. Development Environment
+* **kubeadm Cluster**:
+   * kubeadm Kubernetes implementation with master + node1
    * Contains dedicated "iVolve" namespace
    * Manages Deployments, Services, and Ingress resources
 
@@ -125,10 +125,10 @@ Contains GitOps configuration for continuous deployment:
 ```
 ├── Ansible/               # Ansible playbooks and roles
 ├── ArgoCD/                # ArgoCD configuration files
-├── Docker/                # Dockerfile and application source
+├── app/                # Dockerfile and application source
 ├── Jenkins/               # Jenkinsfile and pipeline configs
-├── Kubernetes/            # Kubernetes manifest files
-├── Terraform/             # Terraform IaC configurations
+├── k8s-manifests/            # Kubernetes manifest files
+├── terraform/             # Terraform IaC configurations
 └── README.md              # This file
 ```
 
