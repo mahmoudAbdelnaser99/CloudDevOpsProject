@@ -4,8 +4,7 @@ A comprehensive end-to-end CI/CD infrastructure for containerized applications, 
 
 ## Project Archticture 
 
-
-
+![alt text](<file-Page-5.drawio (1).svg>)
 ## 🚀 Architecture Overview
 
 This project implements a complete DevOps infrastructure with the following major components:
