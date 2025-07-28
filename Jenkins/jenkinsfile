@@ -1,24 +1,19 @@
 pipeline {
-    agent {
-        label 'slave'
-    }
-
+    agent any
     stages {
-        stage('Build Docker Image') {
+        stage('Build') {
             steps {
-                sh 'docker build -t myapp:latest .'
+                echo 'Building...'
             }
         }
-
-        stage('Push to DockerHub') {
+        stage('Test') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh '''
-                        echo "$PASS" | docker login -u "$USER" --password-stdin
-                        docker tag myapp:latest $USER/myapp:latest
-                        docker push $USER/myapp:latest
-                    '''
-                }
+                echo 'Testing...'
+            }
+        }
+        stage('Deploy') {
+            steps {
+                echo 'Deploying...'
             }
         }
     }
