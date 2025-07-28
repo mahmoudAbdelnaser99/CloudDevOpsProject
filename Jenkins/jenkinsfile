@@ -1,20 +1,75 @@
+@Library('sharedlib') _
+
 pipeline {
-    agent any
+    agent { label 'slave' }
+
+    environment {
+        APP_NAME = 'ivolve-webapp'
+        DOCKER_REGISTRY = 'docker.io'
+        DOCKER_IMAGE = 'elkhawaga/ivolve-webapp'   
+        DOCKER_CREDENTIALS_ID = 'docker'
+        GIT_CREDENTIALS_ID = 'github'
+        MANIFEST_REPO = 'https://github.com/mahmoudAbdelnaser99/CloudDevOpsProject.git'
+        IMAGE_TAG = "${BUILD_NUMBER}"
+        REPO_NAME = 'CloudDevOpsProject'
+        GIT_USERNAME = 'mahmoudAbdelnaser99'
+        EMAIL = 'mahmoudabdelnaser309@gmail.com'
+        DEPLOYMENT = 'ivolve-deployment'
+    }
+
     stages {
-        stage('Build') {
+        stage('Clone App') {
             steps {
-                echo 'Building...'
+                git url: "${MANIFEST_REPO}", branch: 'main'
             }
         }
-        stage('Test') {
+
+        stage('Build Docker Image') {
             steps {
-                echo 'Testing...'
+                buildApp('./app', "${DOCKER_IMAGE}:${IMAGE_TAG}")
             }
         }
-        stage('Deploy') {
+
+        stage('Push to DockerHub') {
             steps {
-                echo 'Deploying...'
+                pushImage("${DOCKER_IMAGE}:${IMAGE_TAG}", "${DOCKER_IMAGE}:${IMAGE_TAG}", "${DOCKER_CREDENTIALS_ID}")
             }
+        }
+
+        stage('Scan Docker Image') {
+            steps {
+                scanImage("${DOCKER_IMAGE}:${IMAGE_TAG}")
+            }
+        }
+
+        stage('Delete Local Docker Image') {
+            steps {
+                sh "docker rmi ${DOCKER_IMAGE}:${IMAGE_TAG} || true"
+            }
+        }
+
+        stage('Update Kubernetes Manifest') {
+            steps {
+                updateManifest('k8s-manifests/deployment.yaml', "${DOCKER_IMAGE}:${IMAGE_TAG}")
+            }
+        }
+
+        stage('Push Manifest to GitHub') {
+            steps {
+                pushManifest("${EMAIL}", "${GIT_USERNAME}", "${GIT_CREDENTIALS_ID}", "${REPO_NAME}", "${IMAGE_TAG}")
+            }
+        }
+    }
+
+    post {
+        always {
+            cleanWs()
+        }
+        success {
+            echo "Pipeline completed successfully!"
+        }
+        failure {
+            echo "Pipeline failed!"
         }
     }
 }
