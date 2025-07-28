@@ -1,115 +1,27 @@
-@Library('jenkins-shared-library') _
-
 pipeline {
-    agent {
+  agent {
         label 'slave'
     }
-    
-    environment {
-        APP_NAME = 'ivolve-webapp'
-        DOCKER_REGISTRY = 'elkhawaga'
-        DOCKER_IMAGE = "${DOCKER_REGISTRY}/${APP_NAME}"
-        DOCKER_CREDENTIALS_ID = 'docker'
-        GIT_CREDENTIALS_ID = 'github' 
-        MANIFEST_REPO = 'https://github.com/mahmoudAbdelnaser99/kubernetes-manifests.git'
-        IMAGE_TAG = "${BUILD_NUMBER}"  
-        REPO_NAME = 'kubernetes-manifests'
-        GIT_USERNAME = 'mahmoudAbdelnaser99'
-        EMAIL = 'mahmoudabdelnaser309@gmail.com'
-        DEPLOYMENT = 'deployment.yaml'
+
+  stages {
+    stage('Build Docker Image') {
+      steps {
+        sh 'docker build -t myapp:latest .'
+      }
     }
-    
-    stages {
-        stage('Unit Test') {
-            steps {
-                dir('app') {  
-                    echo "Running unit tests..."
-                    sh './gradlew clean test'
-                }
-            }
-            post {
-                always {
-                    junit '**/build/test-results/test/*.xml'
-                }
-            }
+
+    stage('Push to DockerHub') {
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'docker', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
+          sh '''
+            echo "$PASS" | docker login -u "$USER" --password-stdin
+            docker tag myapp:latest $USER/myapp:latest
+            docker push $USER/myapp:latest
+          '''
         }
-        
-        stage('Build JAR') {
-            steps {
-                dir('app') {  
-                    echo "Building JAR file..."
-                    sh 'chmod +x gradlew'
-                    sh './gradlew build -x test'
-                    archiveArtifacts artifacts: 'build/libs/*.jar', fingerprint: true
-                }
-            }
-        }
-        
-        stage('Manage Docker Image') {
-            steps {
-                dir('app') {  
-                    script {
-                        BuildandPushDockerimage(
-                            "${DOCKER_CREDENTIALS_ID}", 
-                            "${DOCKER_REGISTRY}", 
-                            "${DOCKER_IMAGE}", 
-                            "${IMAGE_TAG}"
-                        )
-                    }
-                }                
-            }
-        }
-        
-        stage('Delete Image Locally') {
-            steps {
-                echo "Cleaning up local Docker image..."
-                script {
-                    deleteLocalDockerImage(
-                        imageName: "${DOCKER_IMAGE}",
-                        tag: "${IMAGE_TAG}"
-                    )
-                }
-            }
-        }
-        
-        stage('Update Manifests') {
-            steps {
-                echo "Updating Kubernetes manifests..."
-                script {
-                    env.MANIFESTS_WORKSPACE = updateKubernetesManifests(
-                        manifestsRepo: "${MANIFEST_REPO}",
-                        credentialsId: "${GIT_CREDENTIALS_ID}",
-                        imageName: "${DOCKER_IMAGE}",
-                        imageTag: "${IMAGE_TAG}",
-                        appName: "${APP_NAME}",
-                        deploymentFile: "${DEPLOYMENT}"
-                    )
-                }
-            }
-        }
-        
-        stage('Push Manifests') {
-            steps {
-                echo "Pushing updated manifests to repository..."
-                script {
-                    pushKubernetesManifests(
-                        credentialsId: "${GIT_CREDENTIALS_ID}",
-                        workDir: env.MANIFESTS_WORKSPACE
-                    )
-                }
-            }
-        }
+      }
     }
-    
-    post {
-        always {
-            cleanWs()
-        }
-        success {
-            echo "Pipeline completed successfully!"
-        }
-        failure {
-            echo "Pipeline failed!"
-        }
-    }
+
+    // باقي الستيجات هنبنيها لاحقًا
+  }
 }
