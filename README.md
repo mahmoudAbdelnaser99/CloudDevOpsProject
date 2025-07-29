@@ -12,7 +12,6 @@ This project implements a complete DevOps infrastructure with the following majo
 ### 1. AWS Infrastructure (Terraform Provisioned)
 * **EC2 Instance 1 (Master)**:
    * Hosts Jenkins Master that controls the CI pipeline
-   * Runs SonarQube for code quality analysis
    * Configured with Ansible playbooks
 * **EC2 Instance 2 (Slave)**:
    * Jenkins Slave node for executing build jobs
@@ -44,8 +43,6 @@ This project implements a complete DevOps infrastructure with the following majo
 2. Jenkins Master detects changes and assigns build job to Slave
 3. Jenkins Slave executes pipeline steps:
    * Runs unit tests
-   * Performs SonarQube analysis
-   * Builds JAR file
    * Creates Docker image
    * Pushes image to registry
    * Updates Kubernetes manifests
@@ -77,8 +74,9 @@ Contains Infrastructure as Code (IaC) configurations for AWS resources:
 ### Ansible
 
 Contains configuration management scripts to set up:
-- Jenkins Master with SonarQube
+- Jenkins Master 
 - Jenkins Slave configuration
+- k8s kubemaster and node1 
 - All necessary dependencies and services
 
 [Go to Ansible documentation →](./Ansible/README.md)
@@ -88,7 +86,6 @@ Contains configuration management scripts to set up:
 Contains pipeline configurations for CI/CD:
 - Jenkinsfile with complete pipeline definition
 - Shared libraries for common operations
-- SonarQube integration setup
 
 [Go to Jenkins documentation →](./Jenkins/README.md)
 
