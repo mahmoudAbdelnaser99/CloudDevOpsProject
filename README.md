@@ -55,7 +55,7 @@ This project implements a complete DevOps infrastructure with the following majo
 
 - AWS account with appropriate permissions
 - Docker installed
-- Kubernetes cluster (Minikube for local testing)
+- Kubernetes cluster (kubeadm master + node1)
 - Git installed
 - Basic knowledge of Terraform, Ansible, Jenkins, and Kubernetes
 
